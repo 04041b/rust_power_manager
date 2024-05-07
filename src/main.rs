@@ -11,7 +11,7 @@ fn main() {
     // or a scheduler with a given timezone
     // Add some tasks to it
     // problem with print https://stackoverflow.com/questions/76630819/print-doesnt-print-the-message-when-used-inside-a-loop-in-rust
-    scheduler.every(1.seconds()).run(|| {println!("{}", get_power_state()); run_set_powerplan()});
+    scheduler.every(30.seconds()).run(|| {println!("{}", get_power_state()); run_set_powerplan()});
 
     // Manually run the scheduler in an event loop
     loop {
