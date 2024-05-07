@@ -2,10 +2,9 @@
 use clokwerk::{ Scheduler, TimeUnits};
 use uuid::Uuid;
 use winapi::shared::guiddef::GUID;
-use winapi::shared::ntdef::NULL;
 use winapi::um::powersetting::PowerSetActiveScheme;
 // Import week days and WeekDay
-use std::{ thread};
+use std::thread;
 use std::time::Duration;
 fn main() {
     let mut scheduler = Scheduler::new();
@@ -25,7 +24,7 @@ fn main() {
 fn run_set_powerplan() {
     let powerplan;
     match get_power_state() {
-        1 =>   powerplan = ("8C5E7FDA-E8BF-4A96-9A85-A6E23A8C635C"),
+        1 =>   powerplan = "8C5E7FDA-E8BF-4A96-9A85-A6E23A8C635C",
         0=> powerplan = "381B4222-F694-41F0-9685-FF5BB260DF2E",
         _ => powerplan = "381B4222-F694-41F0-9685-FF5BB260DF2E"
     }
@@ -61,11 +60,11 @@ fn get_power_state()->u8  {
 // } 
 
 fn uuid_from_str(uuidstr: &str) -> GUID {
-    let uuidObj:Uuid = uuidstr.parse().unwrap();
-    let mut winGUIDobj: GUID = Default::default();
-    winGUIDobj.Data1 = uuidObj.as_fields().0;
-    winGUIDobj.Data2 = uuidObj.as_fields().1;
-    winGUIDobj.Data3 = uuidObj.as_fields().2;
-    winGUIDobj.Data4 = *uuidObj.as_fields().3;
-    return winGUIDobj;
+    let uuid_obj:Uuid = uuidstr.parse().unwrap();
+    let mut win_guidobj: GUID = Default::default();
+    win_guidobj.Data1 = uuid_obj.as_fields().0;
+    win_guidobj.Data2 = uuid_obj.as_fields().1;
+    win_guidobj.Data3 = uuid_obj.as_fields().2;
+    win_guidobj.Data4 = *uuid_obj.as_fields().3;
+    return win_guidobj;
 }
