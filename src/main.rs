@@ -1,3 +1,5 @@
+#![windows_subsystem = "windows"]
+
 // Scheduler, and trait for .seconds(), .minutes(), etc.
 use clokwerk::{ Scheduler, TimeUnits};
 use uuid::Uuid;
@@ -6,6 +8,7 @@ use winapi::um::powersetting::PowerSetActiveScheme;
 // Import week days and WeekDay
 use std::thread;
 use std::time::Duration;
+
 fn main() {
     let mut scheduler = Scheduler::new();
     // or a scheduler with a given timezone
