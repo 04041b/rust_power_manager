@@ -50,17 +50,6 @@ fn get_power_state()->u8  {
 
 }
 
-//I hate microsoft
-// fn uuid_str_to_uuid(strguid: &str) -> GUID {
-//     println!("{}", strguid.split("-").next().unwrap());
-//     let Data1= hex::decode(strguid.split("-").next().unwrap()).unwrap();
-//     let Data2 = hex::decode(strguid.split("-").next().unwrap()).unwrap();
-//     let Data3 = hex::decode(strguid.split("-").next().unwrap()).unwrap();
-//     let Data4 = hex::decode(strguid.split("-").next().unwrap()).unwrap();
-
-
-//     return GUID {Data1:293829,Data2:23290,Data3:23290,Data4:[1,2,3,4,5,6,7,8]};
-// } 
 
 fn uuid_from_str(uuidstr: &str) -> GUID {
     let uuid_obj:Uuid = uuidstr.parse().unwrap();
