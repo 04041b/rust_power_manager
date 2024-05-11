@@ -12,6 +12,10 @@ use tray_icon::{TrayIcon, TrayIconBuilder};
 use tray_icon::TrayIconEvent;
 
 fn main() {
+    println!("hi")
+}
+
+fn other() {
     println!("before crash");
     let mut scheduler = Scheduler::new();
     // or a scheduler with a given timezone
