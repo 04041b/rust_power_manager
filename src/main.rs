@@ -8,19 +8,40 @@ use winapi::um::powersetting::PowerSetActiveScheme;
 // Import week days and WeekDay
 use std::thread;
 use std::time::Duration;
+use tray_icon::{TrayIcon, TrayIconBuilder};
+use tray_icon::TrayIconEvent;
 
 fn main() {
+    println!("before crash");
     let mut scheduler = Scheduler::new();
     // or a scheduler with a given timezone
     // Add some tasks to it
     // problem with print https://stackoverflow.com/questions/76630819/print-doesnt-print-the-message-when-used-inside-a-loop-in-rust
     scheduler.every(30.seconds()).run(|| {println!("{}", get_power_state()); run_set_powerplan()});
 
+    //let thread_handle = scheduler.watch_thread(Duration::from_millis(100));
     // Manually run the scheduler in an event loop
+    let main_menu = tray_icon::menu::Menu::new();
+    print!("{}" , "sdasdasdad");
+    
+    //let mut icon_file = tray_icon::Icon::from_path(std::path::Path::new("favicon.ico"),None);
+    println!("doesn't reach here");
+
+// let tray_icon = TrayIconBuilder::new()
+//     .with_tooltip("system-tray - tray icon library!")
+//     .with_icon(icon_file.unwrap())
+//     .with_menu(Box::new(main_menu))
+//     .build();
+    
+
+// if let Ok(event) = TrayIconEvent::receiver().try_recv() {
+//     println!("{:?}", event);
+// }
     loop {
         scheduler.run_pending();
         thread::sleep(Duration::from_millis(100));
     }
+    
 }
 
 
