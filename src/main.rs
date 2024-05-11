@@ -10,6 +10,7 @@ use std::thread;
 use std::time::Duration;
 use tray_icon::{TrayIcon, TrayIconBuilder};
 use tray_icon::TrayIconEvent;
+mod rust_power_error;
 
 fn main() {
     let mut scheduler = Scheduler::new();
@@ -22,7 +23,11 @@ fn main() {
     // Manually run the scheduler in an event loop
     let main_menu = tray_icon::menu::Menu::new();
     
-    let mut icon_file = tray_icon::Icon::from_path(std::path::Path::new("favicon.ico"),None).expect("error in file!");
+   // let mut icon_file = tray_icon::Icon::from_path(std::path::Path::new("favicon.ico"),None);
+    let icon_file = match tray_icon::Icon::from_path(std::path::Path::new("favicon.ico"),None) {
+        Ok(icon) => icon,
+        Err(e) => {rust_power_error::craft_error_window_win(e.to_string(), "icon not found"); panic!("{}", e);}
+    };
 
 
 let tray_icon = TrayIconBuilder::new()
