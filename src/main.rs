@@ -1,4 +1,4 @@
-#![windows_subsystem = "windows"]
+//#![windows_subsystem = "windows"]
 
 // Scheduler, and trait for .seconds(), .minutes(), etc.
 use clokwerk::{ Scheduler, TimeUnits};
@@ -12,7 +12,6 @@ use tray_icon::{TrayIcon, TrayIconBuilder};
 use tray_icon::TrayIconEvent;
 
 fn main() {
-    println!("before crash");
     let mut scheduler = Scheduler::new();
     // or a scheduler with a given timezone
     // Add some tasks to it
@@ -22,16 +21,15 @@ fn main() {
     //let thread_handle = scheduler.watch_thread(Duration::from_millis(100));
     // Manually run the scheduler in an event loop
     let main_menu = tray_icon::menu::Menu::new();
-    print!("{}" , "sdasdasdad");
     
-    //let mut icon_file = tray_icon::Icon::from_path(std::path::Path::new("favicon.ico"),None);
-    println!("doesn't reach here");
+    let mut icon_file = tray_icon::Icon::from_path(std::path::Path::new("favicon.ico"),None).expect("error in file!");
 
-// let tray_icon = TrayIconBuilder::new()
-//     .with_tooltip("system-tray - tray icon library!")
-//     .with_icon(icon_file.unwrap())
-//     .with_menu(Box::new(main_menu))
-//     .build();
+
+let tray_icon = TrayIconBuilder::new()
+    .with_tooltip("system-tray - tray icon library!")
+    .with_icon(icon_file)
+    .with_menu(Box::new(main_menu))
+    .build();
     
 
 // if let Ok(event) = TrayIconEvent::receiver().try_recv() {
