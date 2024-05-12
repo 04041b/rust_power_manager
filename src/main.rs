@@ -1,14 +1,17 @@
 //#![windows_subsystem = "windows"]
 
+use std::thread;
+
 // Scheduler, and trait for .seconds(), .minutes(), etc.
 use clokwerk::{ Scheduler, TimeUnits};
+use tray_icon::menu::{MenuEvent, MenuItem};
 use uuid::Uuid;
 use winapi::shared::guiddef::GUID;
 use winapi::um::powersetting::PowerSetActiveScheme;
+
 // Import week days and WeekDay
-use std::thread;
-use std::time::Duration;
-use tray_icon::{TrayIcon, TrayIconBuilder};
+
+use tray_icon::TrayIconBuilder;
 use tray_icon::TrayIconEvent;
 mod rust_power_error;
 
@@ -16,36 +19,67 @@ fn main() {
     let mut scheduler = Scheduler::new();
     // or a scheduler with a given timezone
     // Add some tasks to it
-    // problem with print https://stackoverflow.com/questions/76630819/print-doesnt-print-the-message-when-used-inside-a-loop-in-rust
     scheduler.every(30.seconds()).run(|| {println!("{}", get_power_state()); run_set_powerplan()});
 
     //let thread_handle = scheduler.watch_thread(Duration::from_millis(100));
     // Manually run the scheduler in an event loop
+    let event_loop = winit::event_loop::EventLoopBuilder::new().build().unwrap();
+
+
     let main_menu = tray_icon::menu::Menu::new();
-    
-   // let mut icon_file = tray_icon::Icon::from_path(std::path::Path::new("favicon.ico"),None);
+    main_menu.append(&MenuItem::new("text", true, None)).unwrap();
+
     let icon_file = match tray_icon::Icon::from_path(std::path::Path::new("favicon.ico"),None) {
         Ok(icon) => icon,
-        Err(e) => {rust_power_error::craft_error_window_win(e.to_string(), "icon not found"); panic!("{}", e);}
+        Err(e) => {rust_power_error::craft_error_window_win(e.to_string(), "error"); panic!("{}", e);}
     };
 
+    let menu_channel = MenuEvent::receiver();
+    let tray_channel = TrayIconEvent::receiver();
 
 let tray_icon = TrayIconBuilder::new()
     .with_tooltip("system-tray - tray icon library!")
     .with_icon(icon_file)
     .with_menu(Box::new(main_menu))
-    .build();
-    
+    .build()
+    .unwrap();
+    println!("start");
 
-// if let Ok(event) = TrayIconEvent::receiver().try_recv() {
-//     println!("{:?}", event);
-// }
-    loop {
-        scheduler.run_pending();
-        thread::sleep(Duration::from_millis(100));
-    }
-    
+    let thread_handle = scheduler.watch_thread(std::time::Duration::from_millis(100));
+
+
+
+    event_loop.run(move |event, event_loop| {
+        // We add delay of 16 ms (60fps) to event_loop to reduce cpu load.
+        // This can be removed to allow ControlFlow::Poll to poll on each cpu cycle
+        // Alternatively, you can set ControlFlow::Wait or use TrayIconEvent::set_event_handler,
+        // see https://github.com/tauri-apps/tray-icon/issues/83#issuecomment-1697773065
+
+
+        event_loop.set_control_flow(winit::event_loop::ControlFlow::WaitUntil(
+            std::time::Instant::now() + std::time::Duration::from_millis(16)
+            
+        ));
+
+        if let winit::event::Event::NewEvents(winit::event::StartCause::Init) = event {
+
+            // We create the icon once the event loop is actually running
+            // to prevent issues like https://github.com/tauri-apps/tray-icon/issues/90
+            Some(&tray_icon);
+            // We have to request a redraw here to have the icon actually show up.
+            // Winit only exposes a redraw method on the Window so we use core-foundation directly.
+
+        }
+
+        if let Ok(event) = tray_channel.try_recv() {
+            println!("{event:?}");
+        }
+        
+    }).unwrap();
+
+
 }
+
 
 
 fn run_set_powerplan() {
