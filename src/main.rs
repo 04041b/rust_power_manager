@@ -29,16 +29,15 @@ fn main() {
     let main_menu = tray_icon::menu::Menu::new();
     main_menu.append(&MenuItem::new("text", true, None)).unwrap();
 
-    let icon_file = match tray_icon::Icon::from_path(std::path::Path::new("favicon.ico"),None) {
+    let icon_file = match tray_icon::Icon::from_path(std::path::Path::new("icon.ico"),None) {
         Ok(icon) => icon,
         Err(e) => {rust_power_error::craft_error_window_win(e.to_string(), "error"); panic!("{}", e);}
     };
 
-    let menu_channel = MenuEvent::receiver();
-    let tray_channel = TrayIconEvent::receiver();
+
 
 let tray_icon = TrayIconBuilder::new()
-    .with_tooltip("system-tray - tray icon library!")
+    .with_tooltip("rust power manager - tray")
     .with_icon(icon_file)
     .with_menu(Box::new(main_menu))
     .build()
@@ -48,6 +47,8 @@ let tray_icon = TrayIconBuilder::new()
     let thread_handle = scheduler.watch_thread(std::time::Duration::from_millis(100));
 
 
+    let menu_channel = MenuEvent::receiver();
+    let tray_channel = TrayIconEvent::receiver();
 
     event_loop.run(move |event, event_loop| {
         // We add delay of 16 ms (60fps) to event_loop to reduce cpu load.
