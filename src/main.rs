@@ -13,8 +13,10 @@ use winapi::um::powersetting::PowerSetActiveScheme;
 
 use tray_icon::TrayIconBuilder;
 use tray_icon::TrayIconEvent;
-mod rust_power_error;
 
+use crate::powerplans::PowerplansStruct;
+mod rust_power_error;
+mod powerplans;
 fn main() {
     let mut scheduler = Scheduler::new();
     // or a scheduler with a given timezone
@@ -28,7 +30,6 @@ fn main() {
 
     let main_menu = tray_icon::menu::Menu::new();
     main_menu.append(&MenuItem::new("text", true, None)).unwrap();
-
     let icon_file = match tray_icon::Icon::from_path(std::path::Path::new("icon.ico"),None) {
         Ok(icon) => icon,
         Err(e) => {rust_power_error::craft_error_window_win(e.to_string(), "error"); panic!("{}", e);}
@@ -83,12 +84,13 @@ let tray_icon = TrayIconBuilder::new()
 
 
 
+
 fn run_set_powerplan() {
     let powerplan;
     match get_power_state() {
-        1 =>   powerplan = "8C5E7FDA-E8BF-4A96-9A85-A6E23A8C635C",
-        0=> powerplan = "381B4222-F694-41F0-9685-FF5BB260DF2E",
-        _ => powerplan = "381B4222-F694-41F0-9685-FF5BB260DF2E"
+        1 =>   powerplan = PowerplansStruct::HIGHEST_POWER,
+        0=> powerplan = PowerplansStruct::BALANCED,
+        _ => powerplan = PowerplansStruct::BALANCED,
     }
     let u16powerplanform = uuid_from_str(&powerplan);
     unsafe{
