@@ -21,7 +21,7 @@ fn main() {
     let mut scheduler = Scheduler::new();
     // or a scheduler with a given timezone
     // Add some tasks to it
-    scheduler.every(30.seconds()).run(|| {println!("{}", get_power_state()); run_set_powerplan()});
+    scheduler.every(30.seconds()).run(|| {println!("{}", get_power_state()); auto_run_set_powerplan()});
 
     //let thread_handle = scheduler.watch_thread(Duration::from_millis(100));
     // Manually run the scheduler in an event loop
@@ -29,7 +29,17 @@ fn main() {
 
 
     let main_menu = tray_icon::menu::Menu::new();
-    main_menu.append(&MenuItem::new("text", true, None)).unwrap();
+
+    let sub_menu_power_set = tray_icon::menu::Submenu::new("set power plan", true);
+    let high_power_plan_menu_item = MenuItem::new("high performance plan", true, None);
+    let min_power_plan_menu_item = MenuItem::new("min power plan", true, None);
+    let typical_power_plan_menu_item = MenuItem::new("min power plan", true, None);
+    sub_menu_power_set.append(&high_power_plan_menu_item).unwrap();
+    sub_menu_power_set.append(&min_power_plan_menu_item).unwrap();
+    sub_menu_power_set.append(&typical_power_plan_menu_item).unwrap();
+
+
+    main_menu.append(&sub_menu_power_set).unwrap();
     let icon_file = match tray_icon::Icon::from_path(std::path::Path::new("icon.ico"),None) {
         Ok(icon) => icon,
         Err(e) => {rust_power_error::craft_error_window_win(e.to_string(), "error"); panic!("{}", e);}
@@ -76,6 +86,9 @@ let tray_icon = TrayIconBuilder::new()
         if let Ok(event) = tray_channel.try_recv() {
             println!("{event:?}");
         }
+        if let Ok(event) = menu_channel.try_recv() {
+            println!("{event:?}");
+        }
         
     }).unwrap();
 
@@ -83,9 +96,13 @@ let tray_icon = TrayIconBuilder::new()
 }
 
 
+fn menu_power_set(e:MenuEvent) {
 
 
-fn run_set_powerplan() {
+
+}
+
+fn auto_run_set_powerplan() {
     let powerplan;
     match get_power_state() {
         1 =>   powerplan = PowerplansStruct::HIGHEST_POWER,
