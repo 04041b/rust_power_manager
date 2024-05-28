@@ -1,6 +1,9 @@
 //#![windows_subsystem = "windows"]
 
+use std::borrow::Borrow;
+use std::sync::Mutex;
 use std::thread;
+use lazy_static::lazy_static;
 
 // Scheduler, and trait for .seconds(), .minutes(), etc.
 use clokwerk::{ Scheduler, TimeUnits};
@@ -14,14 +17,16 @@ use winapi::um::powersetting::PowerSetActiveScheme;
 use tray_icon::TrayIconBuilder;
 use tray_icon::TrayIconEvent;
 
-use crate::powerplans::PowerplansStruct;
+use powerplans::PowerPlanMenuID;
+use powerplans::PowerplansStruct;
 mod rust_power_error;
 mod powerplans;
+
 fn main() {
     let mut scheduler = Scheduler::new();
     // or a scheduler with a given timezone
     // Add some tasks to it
-    scheduler.every(30.seconds()).run(|| {println!("{}", get_power_state()); auto_run_set_powerplan()});
+    //scheduler.every(30.seconds()).run(|| {println!("{}", get_power_state()); auto_run_set_powerplan()});
 
     //let thread_handle = scheduler.watch_thread(Duration::from_millis(100));
     // Manually run the scheduler in an event loop
@@ -32,14 +37,16 @@ fn main() {
 
     let sub_menu_power_set = tray_icon::menu::Submenu::new("set power plan", true);
     let high_power_plan_menu_item = MenuItem::new("high performance plan", true, None);
-    let min_power_plan_menu_item = MenuItem::new("min power plan", true, None);
-    let typical_power_plan_menu_item = MenuItem::new("min power plan", true, None);
+    let min_power_use_plan_menu_item = MenuItem::new("min power plan", true, None);
+    let typical_power_plan_menu_item = MenuItem::new("typical power plan", true, None);
     sub_menu_power_set.append(&high_power_plan_menu_item).unwrap();
-    sub_menu_power_set.append(&min_power_plan_menu_item).unwrap();
+    sub_menu_power_set.append(&min_power_use_plan_menu_item).unwrap();
     sub_menu_power_set.append(&typical_power_plan_menu_item).unwrap();
 
-
+    let powerplans_menu_id = PowerPlanMenuID::new(min_power_use_plan_menu_item.into_id(), high_power_plan_menu_item.into_id(), typical_power_plan_menu_item.into_id());
+    
     main_menu.append(&sub_menu_power_set).unwrap();
+
     let icon_file = match tray_icon::Icon::from_path(std::path::Path::new("icon.ico"),None) {
         Ok(icon) => icon,
         Err(e) => {rust_power_error::craft_error_window_win(e.to_string(), "error"); panic!("{}", e);}
@@ -88,6 +95,7 @@ let tray_icon = TrayIconBuilder::new()
         }
         if let Ok(event) = menu_channel.try_recv() {
             println!("{event:?}");
+            menu_power_set(event, powerplans_menu_id.borrow());
         }
         
     }).unwrap();
@@ -96,10 +104,20 @@ let tray_icon = TrayIconBuilder::new()
 }
 
 
-fn menu_power_set(e:MenuEvent) {
-
-
-
+fn menu_power_set(e:MenuEvent, powerplan_menu_id: &PowerPlanMenuID) {
+    let menu_event_id = e.id(); 
+    let powerplan;
+    if  *menu_event_id == powerplan_menu_id.max_power {
+        powerplan =  PowerplansStruct::HIGHEST_POWER;
+    }
+    else if *menu_event_id == powerplan_menu_id.min_power {
+        powerplan=  PowerplansStruct::MIN_POWER;
+    }
+    else {
+        powerplan =  PowerplansStruct::BALANCED;
+    }
+    set_power_from_string(&powerplan)
+    
 }
 
 fn auto_run_set_powerplan() {
@@ -109,14 +127,17 @@ fn auto_run_set_powerplan() {
         0=> powerplan = PowerplansStruct::BALANCED,
         _ => powerplan = PowerplansStruct::BALANCED,
     }
-    let u16powerplanform = uuid_from_str(&powerplan);
-    unsafe{
-        PowerSetActiveScheme(std::ptr::null_mut(),&u16powerplanform );
-    }
+    set_power_from_string(&powerplan);
     println!("new powerset")
 
 }
 
+fn set_power_from_string(powerplan_string: &str ) {
+    let u16powerplanform = uuid_from_str(&powerplan_string);
+    unsafe{
+        PowerSetActiveScheme(std::ptr::null_mut(),&u16powerplanform );
+    }
+}
 fn get_power_state()->u8  {
 
     let mut powerbase: winapi::um::winbase::SYSTEM_POWER_STATUS = Default::default();
