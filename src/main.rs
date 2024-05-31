@@ -1,5 +1,4 @@
-//#![windows_subsystem = "windows"]
-
+#![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 use std::borrow::Borrow;
 use std::sync::Mutex;
 use std::thread;
