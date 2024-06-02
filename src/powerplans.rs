@@ -15,17 +15,19 @@ impl PowerplansStruct {
 
 use tray_icon::menu::MenuId;
 #[derive(Clone)]
-pub struct PowerPlanMenuID{
+pub struct TrayIconMenuID{
     pub min_power: MenuId,
     pub max_power: MenuId,
-    pub typical_power:MenuId
+    pub typical_power:MenuId,
+    pub auto_mode_toggle: MenuId,
 }
-impl PowerPlanMenuID {
-    pub fn new( minpower:MenuId, max_power: MenuId, typical_power: MenuId) -> Self {
+impl TrayIconMenuID {
+    pub fn new( minpower:MenuId, max_power: MenuId, typical_power: MenuId, auto_mode_toggle: MenuId) -> Self {
         Self {
         min_power : minpower,
         typical_power : typical_power,
         max_power : max_power,
+        auto_mode_toggle: auto_mode_toggle
     }
     }
    

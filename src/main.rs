@@ -1,11 +1,14 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 use std::borrow::Borrow;
-use std::sync::Mutex;
+
+use std::cell::{Ref, RefCell};
+use std::sync::{Mutex,Arc};
 use std::thread;
 use lazy_static::lazy_static;
 
 // Scheduler, and trait for .seconds(), .minutes(), etc.
 use clokwerk::{ Scheduler, TimeUnits};
+use once_cell::sync::Lazy;
 use tray_icon::menu::{MenuEvent, MenuItem};
 use uuid::Uuid;
 use winapi::shared::guiddef::GUID;
@@ -13,13 +16,14 @@ use winapi::um::powersetting::PowerSetActiveScheme;
 
 // Import week days and WeekDay
 
-use tray_icon::TrayIconBuilder;
+use tray_icon::{TrayIcon, TrayIconBuilder};
 use tray_icon::TrayIconEvent;
-
-use powerplans::PowerPlanMenuID;
+use powerplans::TrayIconMenuID;
 use powerplans::PowerplansStruct;
 mod rust_power_error;
 mod powerplans;
+
+static mut tray_icon: Lazy<Mutex<TrayIcon>> = Lazy::new(||Mutex::new(TrayIconBuilder::new().build().unwrap()));
 
 fn main() {
     let mut scheduler = Scheduler::new();
@@ -38,13 +42,23 @@ fn main() {
     let high_power_plan_menu_item = MenuItem::new("high performance plan", true, None);
     let min_power_use_plan_menu_item = MenuItem::new("min power plan", true, None);
     let typical_power_plan_menu_item = MenuItem::new("typical power plan", true, None);
+    
     sub_menu_power_set.append(&high_power_plan_menu_item).unwrap();
     sub_menu_power_set.append(&min_power_use_plan_menu_item).unwrap();
     sub_menu_power_set.append(&typical_power_plan_menu_item).unwrap();
-
-    let powerplans_menu_id = PowerPlanMenuID::new(min_power_use_plan_menu_item.into_id(), high_power_plan_menu_item.into_id(), typical_power_plan_menu_item.into_id());
-    
     main_menu.append(&sub_menu_power_set).unwrap();
+
+
+    let auto_mode_switch_menu = MenuItem::new("toggle battery mode", true, None);
+    main_menu.append(&auto_mode_switch_menu).unwrap();
+    
+    
+    let powerplans_menu_id = TrayIconMenuID::new(min_power_use_plan_menu_item.into_id(),
+    high_power_plan_menu_item.into_id(),
+     typical_power_plan_menu_item.into_id(),
+    auto_mode_switch_menu.into_id()
+   
+   );
 
     let icon_file = match tray_icon::Icon::from_path(std::path::Path::new("icon.ico"),None) {
         Ok(icon) => icon,
@@ -52,14 +66,16 @@ fn main() {
     };
 
 
-
-let tray_icon = TrayIconBuilder::new()
-    .with_tooltip("rust power manager - tray")
-    .with_icon(icon_file)
-    .with_menu(Box::new(main_menu))
-    .build()
-    .unwrap();
-    println!("start");
+    unsafe {
+    *tray_icon.lock().unwrap() = TrayIconBuilder::new()
+        .with_tooltip("rust power manager - tray")
+        .with_icon(icon_file)
+        .with_menu(Box::new(main_menu))
+        .build()
+        .unwrap();
+        println!("start");
+            
+}
 
     let thread_handle = scheduler.watch_thread(std::time::Duration::from_millis(100));
 
@@ -83,7 +99,8 @@ let tray_icon = TrayIconBuilder::new()
 
             // We create the icon once the event loop is actually running
             // to prevent issues like https://github.com/tauri-apps/tray-icon/issues/90
-            Some(&tray_icon);
+            unsafe {
+            Some(&tray_icon);}
             // We have to request a redraw here to have the icon actually show up.
             // Winit only exposes a redraw method on the Window so we use core-foundation directly.
 
@@ -103,7 +120,7 @@ let tray_icon = TrayIconBuilder::new()
 }
 
 
-fn menu_power_set(e:MenuEvent, powerplan_menu_id: &PowerPlanMenuID) {
+fn menu_power_set(e:MenuEvent, powerplan_menu_id: &TrayIconMenuID) {
     let menu_event_id = e.id(); 
     let powerplan;
     if  *menu_event_id == powerplan_menu_id.max_power {

@@ -1440,6 +1440,7 @@ version = "0.1.0"
 dependencies = [
  "clokwerk",
  "lazy_static",
+ "once_cell",
  "tray-icon",
  "uuid",
  "winapi",
