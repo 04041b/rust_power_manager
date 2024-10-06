@@ -22,29 +22,14 @@ use powerplans::TrayIconMenuID;
 use powerplans::PowerplansStruct;
 mod rust_power_error;
 mod powerplans;
-mod battery_auto_mode;
 
 static mut tray_icon: Lazy<Mutex<TrayIcon>> = Lazy::new(||Mutex::new(TrayIconBuilder::new().build().unwrap()));
 
-
-
-fn scheduler_run() {
-    let mut scheduler: Scheduler = Scheduler::new();
+fn main() {
+    let mut scheduler = Scheduler::new();
     // or a scheduler with a given timezone
     // Add some tasks to it
-    scheduler.every(30.seconds()).run(|| {println!("{}", get_power_state()); auto_run_set_powerplan()});
-//    let thread_handle = Arc::new(scheduler.watch_thread(std::time::Duration::from_millis(100)));
-    // let thread_handle: clokwerk::ScheduleHandle = scheduler.watch_thread(std::time::Duration::from_millis(100));
-    let thread_handle = Arc::new(Mutex::new(Some(
-        scheduler.watch_thread(std::time::Duration::from_millis(100)),
-    )));
-
-    let t = thread_handle.clone();
-    t.lock().unwrap().take().unwrap().stop();
-} 
-
-fn main() {
-
+    //scheduler.every(30.seconds()).run(|| {println!("{}", get_power_state()); auto_run_set_powerplan()});
 
     //let thread_handle = scheduler.watch_thread(Duration::from_millis(100));
     // Manually run the scheduler in an event loop
@@ -92,6 +77,8 @@ fn main() {
             
 }
 
+    let thread_handle = scheduler.watch_thread(std::time::Duration::from_millis(100));
+
 
     let menu_channel = MenuEvent::receiver();
     let tray_channel = TrayIconEvent::receiver();
@@ -124,9 +111,6 @@ fn main() {
         }
         if let Ok(event) = menu_channel.try_recv() {
             println!("{event:?}");
-            if event.id == powerplans_menu_id.auto_mode_toggle {
-                thread_handle.stop();
-            }
             menu_power_set(event, powerplans_menu_id.borrow());
         }
         
@@ -148,10 +132,6 @@ fn menu_power_set(e:MenuEvent, powerplan_menu_id: &TrayIconMenuID) {
     else {
         powerplan =  PowerplansStruct::BALANCED;
     }
-    if *menu_event_id == powerplan_menu_id.auto_mode_toggle {
-        
-    }
-
     set_power_from_string(&powerplan)
     
 }

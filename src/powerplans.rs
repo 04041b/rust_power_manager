@@ -29,6 +29,6 @@ impl TrayIconMenuID {
         max_power : max_power,
         auto_mode_toggle: auto_mode_toggle
     }
-}
-  
+    }
+   
 }
